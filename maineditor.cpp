@@ -16,14 +16,12 @@ MainEditor::~MainEditor()
 
 void MainEditor::on_toolButton_clicked()
 {
-    xdxfFileName = QFileDialog::getOpenFileName(this, tr("Select XDXF File"), "../German-Idioms/", "XDXF (*.xdxf)");
+    xdxfFileName = QFileDialog::getOpenFileName(this, tr("Select XDXF File"), "../German-Idioms/", "XDXF (*.xdxf);HTML (*.htm)");
     ui->lineEdit->setText(xdxfFileName);
 }
 
 void MainEditor::on_commandLinkButton_clicked()
 {
-    QDomDocument document;
-
     QFile file(xdxfFileName);
     if(file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
@@ -31,18 +29,44 @@ void MainEditor::on_commandLinkButton_clicked()
         file.close();
     }
 
-    QDomNodeList el = document.elementsByTagName("k");
-    for(int i = 0; i < el.count(); i++)
-    {
-        ui->textEdit->append(el.at(i).toElement().text());
-    }
+    //get the root element: <xdxf>, <html>
+    QDomElement root = document.documentElement();
 
-    el = document.elementsByTagName("def");
-    for(int i = 0; i < el.count(); i++)
-    {
-        if(el.at(i).isElement())
-        {
-            ui->textEdit_2->append(el.at(i).toElement().text());
+    //get the body element: <lexicon>, <body>
+    QDomElement body = root.firstChildElement("body");
+//qDebug()<<body.tagName();
+    valueParser(body);
+}
+
+void MainEditor::valueParser(const QDomElement &el)
+{
+    //parse the ar element: <ar>, <p>
+    QDomNode article = el.firstChild();
+
+    while(!article.isNull()){
+        QDomNode value = article.firstChild();
+        while(!value.isNull()){
+            //process the <k> tags
+            if(value.toElement().tagName() == "span")
+            {
+                ui->listWidget->addItem(value.toElement().text());
+            }
+
+            //process the <def> tags
+            /*else if(value.toElement().tagName() == "def")
+             {
+                ui->textEdit->append(value.toElement().text());
+             }
+            */
+
+            //<k> tags can come up several times in an article
+            value = value.nextSibling();
         }
+        article = article.nextSibling();
     }
+}
+
+void MainEditor::on_listWidget_doubleClicked(const QModelIndex &index)
+{
+    ui->textEdit->setText(index.data().toString());
 }

@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QtXml>
 
+
 namespace Ui {
 class MainEditor;
 }
@@ -21,9 +22,13 @@ private slots:
 
     void on_commandLinkButton_clicked();
 
+    void on_listWidget_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::MainEditor *ui;
     QString xdxfFileName;
+    QDomDocument document;
+    void valueParser(const QDomElement &el);
 };
 
 #endif // MAINEDITOR_H

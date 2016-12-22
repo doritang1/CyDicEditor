@@ -16,7 +16,7 @@ MainEditor::~MainEditor()
 
 void MainEditor::on_toolButton_clicked()
 {
-    xdxfFileName = QFileDialog::getOpenFileName(this, tr("Select XDXF File"), "../German-Idioms/", "XDXF (*.xdxf);HTML (*.htm)");
+    xdxfFileName = QFileDialog::getOpenFileName(this, tr("Select XDXF File"), "../German-Idioms/", "XDXF (*.xdxf);; HTML (*.htm)");
     ui->lineEdit->setText(xdxfFileName);
 }
 
@@ -25,44 +25,43 @@ void MainEditor::on_commandLinkButton_clicked()
     QFile file(xdxfFileName);
     if(file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        document.setContent(&file);
+        xdxfParser(&file);
         file.close();
     }
-
-    //get the root element: <xdxf>, <html>
-    QDomElement root = document.documentElement();
-
-    //get the body element: <lexicon>, <body>
-    QDomElement body = root.firstChildElement("body");
-//qDebug()<<body.tagName();
-    valueParser(body);
 }
 
-void MainEditor::valueParser(const QDomElement &el)
+void MainEditor::xdxfParser(QFile *file)
 {
-    //parse the ar element: <ar>, <p>
-    QDomNode article = el.firstChild();
+    document.setContent(file);
 
-    while(!article.isNull()){
-        QDomNode value = article.firstChild();
-        while(!value.isNull()){
+    //get the root element: <xdxf>
+    QDomElement elem_xdxf = document.documentElement();
+
+    //get the body element: <lexicon>
+    QDomElement elem_lexicon = elem_xdxf.firstChildElement("lexicon");
+
+
+    //parse the ar element: <ar>
+    QDomNode node_ar = elem_lexicon.firstChild();
+    while(!node_ar.isNull()){
+        QDomNode node_value = node_ar.firstChild();
+        while(!node_value.isNull()){
             //process the <k> tags
-            if(value.toElement().tagName() == "span")
+            if(node_value.toElement().tagName() == "k")
             {
-                ui->listWidget->addItem(value.toElement().text());
+                ui->listWidget->addItem(node_value.toElement().text());
             }
 
             //process the <def> tags
-            /*else if(value.toElement().tagName() == "def")
+            else if(node_value.toElement().tagName() == "def")
              {
-                ui->textEdit->append(value.toElement().text());
+                ui->textEdit->append(node_value.toElement().text());
              }
-            */
 
             //<k> tags can come up several times in an article
-            value = value.nextSibling();
+            node_value = node_value.nextSibling();
         }
-        article = article.nextSibling();
+        node_ar = node_ar.nextSibling();
     }
 }
 

@@ -27,12 +27,13 @@ private slots:
 private:
     Ui::MainEditor *ui;
 
-    QString xdxfFileName;
+    QString fileName;
+
     QDomDocument document;
     void xdxfParser(QFile *file);
 
-    QString htmlFileName;
     void htmlParser(QFile *file);
+    void Read(QXmlStreamReader &r);
 };
 
 #endif // MAINEDITOR_H

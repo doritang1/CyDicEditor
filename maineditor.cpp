@@ -16,17 +16,23 @@ MainEditor::~MainEditor()
 
 void MainEditor::on_toolButton_clicked()
 {
-    xdxfFileName = QFileDialog::getOpenFileName(this, tr("Select XDXF File"), "../German-Idioms/", "XDXF (*.xdxf);; HTML (*.htm)");
-    ui->lineEdit->setText(xdxfFileName);
+    fileName = QFileDialog::getOpenFileName(this, tr("Select a File to open"), "../German-Idioms/", "XDXF (*.xdxf);; HTML (*.htm*);; All (*.*)");
+    ui->lineEdit->setText(fileName);
 }
 
 void MainEditor::on_commandLinkButton_clicked()
 {
-    QFile file(xdxfFileName);
+    QFile file(fileName);
     if(file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        xdxfParser(&file);
-        file.close();
+        if(fileName.endsWith("xdxf"))
+        {
+            xdxfParser(&file);
+            file.close();
+        }else if(fileName.endsWith("htm")|fileName.endsWith("html")){
+            htmlParser(&file);
+            file.close();
+        }
     }
 }
 
@@ -62,6 +68,29 @@ void MainEditor::xdxfParser(QFile *file)
             node_value = node_value.nextSibling();
         }
         node_ar = node_ar.nextSibling();
+    }
+}
+
+void MainEditor::htmlParser(QFile *file)
+{
+    QXmlStreamReader reader(file);
+Read(reader);
+
+
+}
+
+void MainEditor::Read(QXmlStreamReader &r)
+{
+    while(r.readNextStartElement()){
+        if(r.name()=="head"){
+            Read(r);
+        }else if(r.name()=="title"){
+            ui->listWidget->addItem(r.readElementText());
+        }else if(r.name()=="body"){
+            Read(r);
+        }else if(r.name()=="p"){
+            ui->textEdit->append(r.readElementText());
+        }
     }
 }
 
